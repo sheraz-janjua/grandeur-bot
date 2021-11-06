@@ -28,6 +28,16 @@ void set_speed(uint16_t value)
     analogWrite(LPWM, value);
     analogWrite(RPWM, value);
 }
+void set_speed_l(uint16_t value){
+    if (value > PWMRANGE)
+        value = PWMRANGE;
+    analogWrite(LPWM, value);
+}
+void set_speed_r(uint16_t value){
+    if (value > PWMRANGE)
+        value = PWMRANGE;
+    analogWrite(RPWM, value);
+}
 void move(movement m)
 {
     switch (m)
