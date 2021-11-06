@@ -42,7 +42,7 @@ project.onConnection((status) => {
             await devices.device(deviceID).data().set("f", "*");
    
             /* Logs the state to browser's console */  
-            console.log(state);
+            console.log(f);
         }, 5000);
         
         break;
