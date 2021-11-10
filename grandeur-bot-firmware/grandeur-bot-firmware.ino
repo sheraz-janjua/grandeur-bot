@@ -4,8 +4,8 @@
 #include "move.h"
 // Device's connection configurations
 String apiKey = "grandeurkv7jxe7700af0k178y0f1xcf";
-String deviceID = "devicekvj8xwa60ipx0k17hxk63shm";
-String token = "eyJ0b2tlb iI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltUmxkbWxqWld0MmFqaDRkMkZwTUdsd2VUQnJNVGN4Tm1seloyVmlaaUlzSW5SNWNHVWlPaUprWlhacFkyVWlMQ0pwWVhRaU9qRTJNelU1TWpjME1UQjkuRXRxOHVKd195amJOcXVETXlsNVVRbjZWLVVDU2M1VDloYldtRlZvMERLNCJ9";
+String deviceID = "devicekvrmkbrf0a9m0ixff2hj4phy";
+String token = "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltUmxkbWxqWld0MmNtMXJZbkp4TUdFNWJqQnBlR1k1WmpSc01tUXliaUlzSW5SNWNHVWlPaUprWlhacFkyVWlMQ0pwWVhRaU9qRTJNelkwTXpRd01qRjkuRzZsUFljVTVqUVk3UGpBR21PV3BNNlpiaF9iQ0Z5dlVlX0lJOFRIWTYtbyJ9";
 const char *ssid = "Octopus";
 const char *passphrase = "Sheraz81";
 motion lr[2] = {HALT, HALT};
@@ -22,12 +22,14 @@ void cb(const char* path, const char* state) {
     case 'R': lr[param] = BACKWARD; break;
     default: lr[param] = HALT; break;
   }
-}
-void cb_speed(const char* path, const char* state) 
-{
+}void cb_speed(const char* path, const char* state) {
   String speed_str = String(state);
   uint16_t _speed = speed_str.toInt();
-  set_speed(_speed);
+  switch (path[1]) {
+    case 'l': set_speed_l(_speed); break;
+    case 'r': set_speed_r(_speed); break;
+    default: break;
+  }
 }
 void cb_roll(const char* path, const char* state) 
 {
@@ -60,7 +62,8 @@ void setup()
   Serial.println("Begin");
   project.device(deviceID).data().on("l", cb);
   project.device(deviceID).data().on("r", cb);
-  project.device(deviceID).data().on("s", cb_speed);
+  project.device(deviceID).data().on("sl", cb_speed);
+  project.device(deviceID).data().on("sr", cb_speed);
   project.device(deviceID).data().on("f", cb_roll);
 }
 

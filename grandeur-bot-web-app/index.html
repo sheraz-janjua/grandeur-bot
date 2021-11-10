@@ -1,22 +1,24 @@
 <!-- Index.html -->
 <!DOCTYPE html>
 <html>
-  <!-- Head block of our page-->
-  <head>
-    <!-- Title of our page-->
-    <title>Bot Control</title>
+<!-- Head block of our page-->
 
-    <!-- Link SDK with CDN -->
-    <script src="https://unpkg.com/grandeur-js"></script>
-  </head>
-  
-  <!-- Body block of our page-->
-  <body>
-    <!-- Heading of the page -->
-    <h1>Bot control dash</h1>
-    <p id="status">Starting</p>
+<head>
+  <!-- Title of our page-->
+  <title>Bot Control</title>
 
-    <!-- Link the main script file -->
-    <script src="./main.js"></script>
-  </body>
+  <!-- Link SDK with CDN -->
+  <script src="https://unpkg.com/grandeur-js"></script>
+</head>
+
+<!-- Body block of our page-->
+
+<body>
+  <!-- Heading of the page -->
+  <h1 style="text-align:center;" id="status">Starting</h1>
+  <canvas id="canvas" name="game"></canvas>
+  <!-- Link the main script file -->
+  <script src="./main.js"></script>
+</body>
+
 </html>
