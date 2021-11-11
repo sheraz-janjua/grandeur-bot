@@ -110,14 +110,14 @@ window.addEventListener('load', () => {
 var width, height, x_orig, y_orig;
 var gx = 0;
 var gy = 0;
-const sens = 50;
+const sens = 40;
 const radius = 100;
 function send_xy(x, y) {
     if (Math.abs(x - gx) > sens || Math.abs(y - gy) > sens) {
         gx = x;
         gy = y;
         // TODO: send data 
-        const speed = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 10; // 0 to 1
+        const speed = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 4; // 0 to 1
         var sr = 0, sl = 0;
         if (x > 0) {
             sl = Math.ceil(x * speed);
