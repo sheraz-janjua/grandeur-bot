@@ -8,7 +8,7 @@ var project = grandeur.init("grandeurkv7jxe7700af0k178y0f1xcf", "accesskvnwixok0
 var devices;
 var deviceID = "devicekvrmkbrf0a9m0ixff2hj4phy";
 var timer = null;
-
+var connected = false;
 /* Setting the connection status update handler */
 project.onConnection((status) => {
     /* 
@@ -25,33 +25,14 @@ project.onConnection((status) => {
             */
             document.getElementById("status").innerText = "Connected";
             devices = project.devices();
-            /* Here we set up the timer to update parms every 5 seconds */
-            // timer = setInterval(async function () {
-            //     /* 
-            //         This function updates the device parameters
-            //         and set the state to a random string.
-            //     */
-
-            //     var deviceID = "devicekvrmkbrf0a9m0ixff2hj4phy";
-            //     /* Here we use *Date* for a random state value */
-            //     var f = "*";
-
-            //     /* Gets reference to device class */
-            //     var devices = project.devices();
-
-            //     /* Updates the device state */
-            //     await devices.device(deviceID).data().set("f", "*");
-
-            //     /* Logs the state to browser's console */
-            //     console.log(f);
-            // }, 5000);
+            connected = true;
             break;
         default:
             /* If SDK gets disconnected, we display the status
                on the app and clear the timer.
              */
             document.getElementById("status").innerText = "Disconnected";
-
+            connected = false;
             /* Clears timer */
             clearInterval(timer);
     }
@@ -130,18 +111,25 @@ var width, height, x_orig, y_orig;
 const radius = 100;
 function send_xy(x, y) {
     // TODO: send data 
-    const speed = Math.round(100 * Math.sqrt(Math.pow(x - x_orig, 2) + Math.pow(y - y_orig, 2)) / radius);
-    const sr = ((radius - x)/radius) * speed;
-    const sl = (((x + radius)/radius) * speed);
-    const f = y < 0 ? 'F' : y < 0 ? 'B' : '*';
+    const speed = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 10; // 0 to 1
+    var sr = 0, sl = 0;
+    if (x > 0) {
+        sl = Math.ceil(x * speed);
+        sr = Math.ceil((100 - x) * speed);
+    }
+    else if (x < 0) {
+        sl = Math.ceil((100 + x) * speed);
+        sr = Math.ceil((-x) * speed);
+    }
+    const f = y < 0 ? 'F' : y > 0 ? 'B' : '*';
 
-    // console.log('x = ' + x + ', y = ' + y + '\n');
-    // console.log('sl = ' + sl + ', sr = ' + sr + '\n');
-    // console.log('speed = ' + speed + ', f= ' + f + '\n');
-    if (devices) {
+    console.log('x = ' + x + ', y = ' + y + '\n');
+    console.log('sl = ' + sl + ', sr = ' + sr + '\n');
+    console.log('speed = ' + speed + ', f= ' + f + '\n');
+    if (devices && connected) {
+        devices.device(deviceID).data().set("f", f);
         devices.device(deviceID).data().set("sl", sl.toString());
         devices.device(deviceID).data().set("sr", sr.toString());
-        devices.device(deviceID).data().set("f", f);
     }
 }
 function resize() {
