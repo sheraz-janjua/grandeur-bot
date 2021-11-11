@@ -108,28 +108,35 @@ window.addEventListener('load', () => {
 
 
 var width, height, x_orig, y_orig;
+var gx = 0;
+var gy = 0;
+const sens = 50;
 const radius = 100;
 function send_xy(x, y) {
-    // TODO: send data 
-    const speed = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 10; // 0 to 1
-    var sr = 0, sl = 0;
-    if (x > 0) {
-        sl = Math.ceil(x * speed);
-        sr = Math.ceil((100 - x) * speed);
-    }
-    else if (x < 0) {
-        sl = Math.ceil((100 + x) * speed);
-        sr = Math.ceil((-x) * speed);
-    }
-    const f = y < 0 ? 'F' : y > 0 ? 'B' : '*';
+    if (Math.abs(x - gx) > sens || Math.abs(y - gy) > sens) {
+        gx = x;
+        gy = y;
+        // TODO: send data 
+        const speed = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 10; // 0 to 1
+        var sr = 0, sl = 0;
+        if (x > 0) {
+            sl = Math.ceil(x * speed);
+            sr = Math.ceil((100 - x) * speed);
+        }
+        else if (x < 0) {
+            sl = Math.ceil((100 + x) * speed);
+            sr = Math.ceil((-x) * speed);
+        }
+        const f = y < 0 ? 'F' : y > 0 ? 'R' : '*';
 
-    console.log('x = ' + x + ', y = ' + y + '\n');
-    console.log('sl = ' + sl + ', sr = ' + sr + '\n');
-    console.log('speed = ' + speed + ', f= ' + f + '\n');
-    if (devices && connected) {
-        devices.device(deviceID).data().set("f", f);
-        devices.device(deviceID).data().set("sl", sl.toString());
-        devices.device(deviceID).data().set("sr", sr.toString());
+        console.log('x = ' + x + ', y = ' + y + '\n');
+        console.log('sl = ' + sl + ', sr = ' + sr + '\n');
+        console.log('speed = ' + speed + ', f= ' + f + '\n');
+        if (devices && connected) {
+            devices.device(deviceID).data().set("f", f);
+            devices.device(deviceID).data().set("sl", sl.toString());
+            devices.device(deviceID).data().set("sr", sr.toString());
+        }
     }
 }
 function resize() {
@@ -159,7 +166,6 @@ function joystick(width, height) {
     ctx.strokeStyle = '#D1CFCF';
     ctx.lineWidth = 10;
     ctx.stroke();
-    send_xy(0, 0);
 }
 
 let coord = { x: 0, y: 0 };
@@ -196,6 +202,7 @@ function stopDrawing() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     background();
     joystick(width / 2, height / 3);
+    send_xy(0,0);
 }
 
 function Draw(event) {
@@ -223,7 +230,6 @@ function Draw(event) {
 
         var x_relative = Math.round(x - x_orig);
         var y_relative = Math.round(y - y_orig);
-        var f = (y_relative > 0) ? 'F' : '*';
         send_xy(x_relative, y_relative);
     }
 }
