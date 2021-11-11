@@ -139,8 +139,8 @@ function send_xy(x, y) {
     // console.log('sl = ' + sl + ', sr = ' + sr + '\n');
     // console.log('speed = ' + speed + ', f= ' + f + '\n');
     if (devices) {
-        devices.device(deviceID).data().set("sl", sl);
-        devices.device(deviceID).data().set("sr", sr);
+        devices.device(deviceID).data().set("sl", sl.toString());
+        devices.device(deviceID).data().set("sr", sr.toString());
         devices.device(deviceID).data().set("f", f);
     }
 }
