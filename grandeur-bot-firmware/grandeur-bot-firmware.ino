@@ -2,10 +2,11 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include "move.h"
+#include "math.h"
 // Device's connection configurations
 String apiKey = "grandeurkv7jxe7700af0k178y0f1xcf";
-String deviceID = "devicekvrmkbrf0a9m0ixff2hj4phy";
-String token = "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltUmxkbWxqWld0MmNtMXJZbkp4TUdFNWJqQnBlR1k1WmpSc01tUXliaUlzSW5SNWNHVWlPaUprWlhacFkyVWlMQ0pwWVhRaU9qRTJNelkwTXpRd01qRjkuRzZsUFljVTVqUVk3UGpBR21PV3BNNlpiaF9iQ0Z5dlVlX0lJOFRIWTYtbyJ9";
+String deviceID = "devicekvvxu41q00260pxfcat23jum";
+String token = "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltUmxkbWxqWld0MmRuaDFOREY1TURBeU56QndlR1l4Y0dFd00yc3phQ0lzSW5SNWNHVWlPaUprWlhacFkyVWlMQ0pwWVhRaU9qRTJNelkyT1RRNE1UaDkuZHlGOWZKUUhfRXdCNl82NVp4b3pfeWN6bkNXeE9pN1F3TkdZclYzNGMwVSJ9";
 const char *ssid = "Octopus";
 const char *passphrase = "Sheraz81";
 motion lr[2] = {HALT, HALT};
@@ -15,41 +16,29 @@ Grandeur::Project project;
 
 // Starts the device WiFi.
 void startWiFi(void);
-void cb(const char* path, const char* state) {
-  bool param = path[0] == 'l';
-  switch (state[0]) {
-    case 'F': lr[param] = FORWARD; break;
-    case 'R': lr[param] = BACKWARD; break;
-    default: lr[param] = HALT; break;
-  }
-}void cb_speed(const char* path, const char* state) {
-  String speed_str = String(state);
-  uint16_t _speed = speed_str.toInt();
-  switch (path[1]) {
-    case 'l': set_speed_l(_speed); break;
-    case 'r': set_speed_r(_speed); break;
-    default: break;
-  }
-}
-void cb_roll(const char* path, const char* state) 
+void cb(const char *path, const char *state)
 {
-  switch (state[0]) {
-    case 'F': {
-        lr[0] = FORWARD;
-        lr[1] = FORWARD;
-        break;
-      }
-    case 'R': {
-        lr[0] = BACKWARD;
-        lr[1] = BACKWARD;
-        break;
-      }
-    default: {
-        lr[0] = HALT;
-        lr[1] = HALT;
-        break;
-      }
-  }
+  // TODO: handle joystick x,y
+  // 1- decode x y
+  String xy_str = String(state);
+  unsigned char comma_pos = xy_str.indexOf(',');
+  String x_str = xy_str.substring(0, comma_pos);
+  String y_str = xy_str.substring(comma_pos + 1);
+  //Serial.printf("\n%s:%d:(%s,%s)\n", xy_str, comma_pos, x_str, y_str);
+  int _x = x_str.toInt();
+  int _y = y_str.toInt();
+
+  // 2- decode f
+  for (int param = 0; param < 2; param++)
+    lr[param] = (_y > 0) ? BACKWARD : (_y < 0) ? FORWARD
+                : HALT;
+  // 3- decode speeds
+  float speed = round(sqrt(pow(_x, 2) + pow(_y, 2))/10);
+  uint16_t sl = (_x > 0) ? _x * speed : (_x < 0) ? (100 + _x) * speed : speed;
+  uint16_t sr = (_x > 0) ? (100 - _x) * speed : (_x < 0) ? (-1 * _x * speed) : speed;
+//  Serial.printf("\n%d,%d:%f:%d,%d\n", _x, _y, speed, sl, sr);
+  set_speed_l(sl);
+  set_speed_r(sr);
 }
 void setup()
 {
@@ -60,17 +49,14 @@ void setup()
   // This initializes the SDK's configurations and returns a new object of Project class.
   project = grandeur.init(apiKey, token);
   Serial.println("Begin");
-  project.device(deviceID).data().on("l", cb);
-  project.device(deviceID).data().on("r", cb);
-  project.device(deviceID).data().on("sl", cb_speed);
-  project.device(deviceID).data().on("sr", cb_speed);
-  project.device(deviceID).data().on("f", cb_roll);
+  project.device(deviceID).data().on("p", cb);
 }
 
 void loop()
 {
   // This runs the SDK only when the WiFi is connected.
-  if (WiFi.status() == WL_CONNECTED) project.loop();
+  if (WiFi.status() == WL_CONNECTED)
+    project.loop();
   move(lr[1], lr[0]);
 }
 

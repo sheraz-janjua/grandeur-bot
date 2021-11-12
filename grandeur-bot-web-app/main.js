@@ -6,7 +6,7 @@
 var canvas, ctx;
 var project = grandeur.init("grandeurkv7jxe7700af0k178y0f1xcf", "accesskvnwixok03jh0ixfefx1hftc", "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltRmpZMlZ6YzJ0MmJuZHBlRzlyTUROcWFEQnBlR1psWm5neGFHWjBZeUlzSW5SNWNHVWlPaUpoWTJObGMzTWlMQ0pwWVhRaU9qRTJNell5TURnNE9EZDkuZ0ZwTjFIMzhLaDZiaHBPa3FZbGpFdXNSVW1YNVZCSzM5T3NUczE5NlM3VSJ9");
 var devices;
-var deviceID = "devicekvrmkbrf0a9m0ixff2hj4phy";
+var deviceID = "devicekvvxu41q00260pxfcat23jum";
 var timer = null;
 var connected = false;
 /* Setting the connection status update handler */
@@ -110,32 +110,18 @@ window.addEventListener('load', () => {
 var width, height, x_orig, y_orig;
 var gx = 0;
 var gy = 0;
-const sens = 40;
+const sens = 10;
 const radius = 100;
 function send_xy(x, y) {
     if (Math.abs(x - gx) > sens || Math.abs(y - gy) > sens) {
         gx = x;
         gy = y;
         // TODO: send data 
-        const speed = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 4; // 0 to 1
-        var sr = 0, sl = 0;
-        if (x > 0) {
-            sl = Math.ceil(x * speed);
-            sr = Math.ceil((100 - x) * speed);
-        }
-        else if (x < 0) {
-            sl = Math.ceil((100 + x) * speed);
-            sr = Math.ceil((-x) * speed);
-        }
-        const f = y < 0 ? 'F' : y > 0 ? 'R' : '*';
-
-        console.log('x = ' + x + ', y = ' + y + '\n');
-        console.log('sl = ' + sl + ', sr = ' + sr + '\n');
-        console.log('speed = ' + speed + ', f= ' + f + '\n');
+        const p_str = x + ',' + y;
+        // console.log(p_str + '\n');
         if (devices && connected) {
-            devices.device(deviceID).data().set("f", f);
-            devices.device(deviceID).data().set("sl", sl.toString());
-            devices.device(deviceID).data().set("sr", sr.toString());
+            devices.device(deviceID).data().set("p", p_str);
+            // console.log(':ok\n');
         }
     }
 }
@@ -202,7 +188,7 @@ function stopDrawing() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     background();
     joystick(width / 2, height / 3);
-    send_xy(0,0);
+    send_xy(0, 0);
 }
 
 function Draw(event) {
@@ -225,8 +211,10 @@ function Draw(event) {
             joystick(x, y);
         }
 
-
-        getPosition(event);
+        try {
+            getPosition(event);
+        }
+        catch (e) { };
 
         var x_relative = Math.round(x - x_orig);
         var y_relative = Math.round(y - y_orig);
