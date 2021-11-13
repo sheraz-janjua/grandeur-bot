@@ -1,28 +1,18 @@
 #include <Grandeur.h>
-#include <DNSServer.h>
-#include <ESP8266mDNS.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include "RemoteDebug.h"        //https://github.com/JoaoLopesF/RemoteDebug
 #include "move.h"
 #include "math.h"
-#define HOST_NAME "bot"
+
+#define FS 1023 // full speed PWM
+#define TS 50 // turn speed PWM
+
 // Device's connection configurations
 String apiKey = "grandeurkv7jxe7700af0k178y0f1xcf";
-String deviceID = "devicekvvxu41q00260pxfcat23jum";
-String token = "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltUmxkbWxqWld0MmRuaDFOREY1TURBeU56QndlR1l4Y0dFd00yc3phQ0lzSW5SNWNHVWlPaUprWlhacFkyVWlMQ0pwWVhRaU9qRTJNelkyT1RRNE1UaDkuZHlGOWZKUUhfRXdCNl82NVp4b3pfeWN6bkNXeE9pN1F3TkdZclYzNGMwVSJ9";
+String deviceID = "devicekvxja2pn00fc0pxf1rds7uo3";
+String token = "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltUmxkbWxqWld0MmVHcGhNbkZxTURCbVpEQndlR1l5YmpsdFlXVmhZU0lzSW5SNWNHVWlPaUprWlhacFkyVWlMQ0pwWVhRaU9qRTJNelkzT1RFek1EQjkuLWV0YUxLb1I4Y0RXbW1zNXpkLVdCOHZ1YTNpUXNSLUJrNUNvNXNMQlVfOCJ9";
 const char *ssid = "Octopus";
 const char *passphrase = "Sheraz81";
-motion lr[2] = {HALT, HALT};
-
-#ifndef DEBUG_DISABLED // Only if debug is not disabled (for production/release)
-
-// Instance of RemoteDebug
-
-RemoteDebug Debug;
-
-#endif
-
 // Object of Grandeur project.
 Grandeur::Project project;
 
@@ -30,29 +20,27 @@ Grandeur::Project project;
 void startWiFi(void);
 void cb(const char *path, const char *state)
 {
-  // TODO: handle joystick x,y
-  // 1- decode x y
-  String xy_str = String(state);
-  unsigned char comma_pos = xy_str.indexOf(',');
-  String x_str = xy_str.substring(0, comma_pos);
-  String y_str = xy_str.substring(comma_pos + 1);
-  //Serial.printf("\n%s:%d:(%s,%s)\n", xy_str, comma_pos, x_str, y_str);
-  Debug.printf("\n%s:%d:(%s,%s)\n", xy_str, comma_pos, x_str, y_str);
-  int _x = x_str.toInt();
-  int _y = y_str.toInt();
-
+  motion lr[2] = {HALT, HALT};
+  uint16_t sl = FS;
+  uint16_t sr = FS;
+  // TODO: handle joystick N,S,E,W,etc.
+  // 1- decode N/S
+  Serial.println(state);
   // 2- decode f
   for (int param = 0; param < 2; param++)
-    lr[param] = (_y > 0) ? BACKWARD : (_y < 0) ? FORWARD
+    lr[param] = (state[0] == 'S') ? BACKWARD : (state[0] == 'N')  ? FORWARD
                 : HALT;
-  // 3- decode speeds
-  float speed = round(sqrt(pow(_x, 2) + pow(_y, 2)) / 48);
-  uint16_t sl = (_x > 0) ? _x * speed : (_x < 0) ? (100 + _x) * speed : speed;
-  uint16_t sr = (_x > 0) ? (100 - _x) * speed : (_x < 0) ? (-1 * _x * speed) : speed;
-  //Serial.printf("\n%d,%d:%f:%d,%d\n", _x, _y, speed, sl, sr);
-  Debug.printf("\n%d,%d:%f:%d,%d\n", _x, _y, speed, sl, sr);
+  // 3- decode speeds // full for N/S half the other side for turn
+  switch (state[0]) {
+    case 'N': if (state[1] == 'E')sr = TS; else if (state[1] == 'W')sl = TS; break;
+    case 'S': if (state[1] == 'E')sr = TS; else if (state[1] == 'W')sl = TS; break;
+    case 'E': lr[1] = FORWARD; break;
+    case 'W': lr[0] = FORWARD; break;
+    default: sl = 0; sr = 0; break;
+  }
   set_speed_l(sl);
   set_speed_r(sr);
+  move(lr[1], lr[0]);
 }
 void setup()
 {
@@ -63,7 +51,7 @@ void setup()
   // This initializes the SDK's configurations and returns a new object of Project class.
   project = grandeur.init(apiKey, token);
   Serial.println("Begin");
-  project.device(deviceID).data().on("p", cb);
+  project.device(deviceID).data().on("D", cb);
 }
 
 void loop()
@@ -71,7 +59,6 @@ void loop()
   // This runs the SDK only when the WiFi is connected.
   if (WiFi.status() == WL_CONNECTED)
     project.loop();
-  move(lr[1], lr[0]);
 }
 
 void startWiFi(void)
@@ -92,15 +79,6 @@ void startWiFi(void)
   Serial.println("*");
   // This gets printed after the WiFi is connected.
   Serial.printf("\nDevice has successfully connected to WiFi. Its IP Address is: %s\n", WiFi.localIP().toString().c_str());
-  WiFi.hostname(HOST_NAME);
-
-  if (MDNS.begin(HOST_NAME)) {
-    Serial.print("* MDNS responder started. Hostname -> ");
-    Serial.println(HOST_NAME);
-  }
-  MDNS.addService("telnet", "tcp", 23); // WiFi server of RemoteDebug, register as telnet
-
-  Debug.begin(HOST_NAME); // Initiaze the WiFi server
   Serial.print("* WiFI connected. IP address: ");
   Serial.println(WiFi.localIP());
 }

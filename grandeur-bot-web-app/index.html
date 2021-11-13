@@ -22,9 +22,9 @@
   <script type="text/javascript">
     // Create JoyStick object into the DIV 'joyDiv'
 
-    var joy3Param = { "title": "joystick3", "internalFillColor": "#000000","internalStrokeColor": "#000033","externalStrokeColor": "#000033","externalFillColor": "#000000"};
+    var joyParam = { "title": "joystick", "internalFillColor": "#000000", "internalStrokeColor": "#000033", "externalStrokeColor": "#000033", "externalFillColor": "#000000" };
     // var joyParam = { "internalFillColor": "0xFFFFFF" };
-    var joy = new JoyStick('joyDiv', joy3Param);
+    var joy = new JoyStick('joyDiv', joyParam);
     /*
     Initialize the SDK and get
     a reference to the project
@@ -32,7 +32,7 @@
     var canvas, ctx;
     var project = grandeur.init("grandeurkv7jxe7700af0k178y0f1xcf", "accesskvnwixok03jh0ixfefx1hftc", "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltRmpZMlZ6YzJ0MmJuZHBlRzlyTUROcWFEQnBlR1psWm5neGFHWjBZeUlzSW5SNWNHVWlPaUpoWTJObGMzTWlMQ0pwWVhRaU9qRTJNell5TURnNE9EZDkuZ0ZwTjFIMzhLaDZiaHBPa3FZbGpFdXNSVW1YNVZCSzM5T3NUczE5NlM3VSJ9");
     var devices;
-    var deviceID = "devicekvvxu41q00260pxfcat23jum";
+    var deviceID = "devicekvxja2pn00fc0pxf1rds7uo3";
     var timer = null;
     var connected = false;
 
@@ -41,12 +41,16 @@
 
 
     const sens = 10;
-    const radius = 100;
+    var gdir = "*";
 
     setInterval(function () {
-      const x = joy.GetX();
-      const y = joy.GetY();
-      send_xy(x, y);
+      const dir = joy.GetDir();
+      if (dir !== gdir) {
+        gdir = dir;
+        if (devices && connected) {
+          devices.device(deviceID).data().set("D", dir);
+        }
+      }
     }, 100);
 
     /* Setting the connection status update handler */
@@ -126,25 +130,10 @@
         document.getElementById("status").innerText = "Network Error";
       }
     }
-    function send_xy(x, y) {
-      if (Math.abs(x - gx) > sens || Math.abs(y - gy) > sens) {
-        gx = x;
-        gy = y;
-        // TODO: send data 
-        const p_str = x + ',' + y;
-        console.log(p_str + '\n');
-        if (devices && connected) {
-          devices.device(deviceID).data().set("p", p_str);
-          // console.log(':ok\n');
-        }
-      }
-    }
-
+    
     /* Call login on startup */
     login();
   </script>
-
-  <!-- <script src="./main.js"></script> -->
 </body>
 
 </html>
