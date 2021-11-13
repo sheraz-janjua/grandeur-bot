@@ -9,6 +9,22 @@ var devices;
 var deviceID = "devicekvvxu41q00260pxfcat23jum";
 var timer = null;
 var connected = false;
+
+var gx = 0;
+var gy = 0;
+
+
+const sens = 10;
+const radius = 100;
+
+var joy = new JoyStick('joyDiv');
+
+setInterval(function () {
+    const x = joy.GetX();
+    const y = joy.GetY();
+    send_xy(x, y);
+}, 100);
+
 /* Setting the connection status update handler */
 project.onConnection((status) => {
     /* 
@@ -86,32 +102,6 @@ async function login() {
         document.getElementById("status").innerText = "Network Error";
     }
 }
-
-window.addEventListener('load', () => {
-
-    canvas = document.getElementById('canvas');
-    ctx = canvas.getContext('2d');
-    resize();
-
-    document.addEventListener('mousedown', startDrawing);
-    document.addEventListener('mouseup', stopDrawing);
-    document.addEventListener('mousemove', Draw);
-
-    document.addEventListener('touchstart', startDrawing);
-    document.addEventListener('touchend', stopDrawing);
-    document.addEventListener('touchcancel', stopDrawing);
-    document.addEventListener('touchmove', Draw);
-    window.addEventListener('resize', resize);
-});
-
-
-
-
-var width, height, x_orig, y_orig;
-var gx = 0;
-var gy = 0;
-const sens = 10;
-const radius = 100;
 function send_xy(x, y) {
     if (Math.abs(x - gx) > sens || Math.abs(y - gy) > sens) {
         gx = x;
@@ -125,101 +115,6 @@ function send_xy(x, y) {
         }
     }
 }
-function resize() {
-    width = window.innerWidth;
-    height = radius * 6.5;
-    ctx.canvas.width = width;
-    ctx.canvas.height = height;
-    background();
-    joystick(width / 2, height / 3);
-}
 
-function background() {
-    x_orig = width / 2;
-    y_orig = height / 3;
-
-    ctx.beginPath();
-    ctx.arc(x_orig, y_orig, radius + 20, 0, Math.PI * 2, true);
-    ctx.fillStyle = '#ECE5E5';
-    ctx.fill();
-}
-
-function joystick(width, height) {
-    ctx.beginPath();
-    ctx.arc(width, height, radius, 0, Math.PI * 2, true);
-    ctx.fillStyle = '#000000';
-    ctx.fill();
-    ctx.strokeStyle = '#D1CFCF';
-    ctx.lineWidth = 10;
-    ctx.stroke();
-}
-
-let coord = { x: 0, y: 0 };
-let paint = false;
-
-function getPosition(event) {
-    var mouse_x = event.clientX ? event.clientX : event.touches[0].clientX ? event.touches[0].clientX : 0;
-    var mouse_y = event.clientY || event.touches[0].clientY;
-    coord.x = mouse_x - canvas.offsetLeft;
-    coord.y = mouse_y - canvas.offsetTop;
-}
-
-function is_it_in_the_circle() {
-    var current_radius = Math.sqrt(Math.pow(coord.x - x_orig, 2) + Math.pow(coord.y - y_orig, 2));
-    if (radius >= current_radius) return true
-    else return false
-}
-
-
-function startDrawing(event) {
-    paint = true;
-    getPosition(event);
-    if (is_it_in_the_circle()) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        background();
-        joystick(coord.x, coord.y);
-        Draw();
-    }
-}
-
-
-function stopDrawing() {
-    paint = false;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    background();
-    joystick(width / 2, height / 3);
-    send_xy(0, 0);
-}
-
-function Draw(event) {
-
-    if (paint) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        background();
-        var x, y;
-        var angle = Math.atan2((coord.y - y_orig), (coord.x - x_orig));
-
-
-        if (is_it_in_the_circle()) {
-            joystick(coord.x, coord.y);
-            x = coord.x;
-            y = coord.y;
-        }
-        else {
-            x = radius * Math.cos(angle) + x_orig;
-            y = radius * Math.sin(angle) + y_orig;
-            joystick(x, y);
-        }
-
-        try {
-            getPosition(event);
-        }
-        catch (e) { };
-
-        var x_relative = Math.round(x - x_orig);
-        var y_relative = Math.round(y - y_orig);
-        send_xy(x_relative, y_relative);
-    }
-}
 /* Call login on startup */
 login();

@@ -1,8 +1,12 @@
 #include <Grandeur.h>
+#include <DNSServer.h>
+#include <ESP8266mDNS.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#include "RemoteDebug.h"        //https://github.com/JoaoLopesF/RemoteDebug
 #include "move.h"
 #include "math.h"
+#define HOST_NAME "bot"
 // Device's connection configurations
 String apiKey = "grandeurkv7jxe7700af0k178y0f1xcf";
 String deviceID = "devicekvvxu41q00260pxfcat23jum";
@@ -10,6 +14,14 @@ String token = "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5l
 const char *ssid = "Octopus";
 const char *passphrase = "Sheraz81";
 motion lr[2] = {HALT, HALT};
+
+#ifndef DEBUG_DISABLED // Only if debug is not disabled (for production/release)
+
+// Instance of RemoteDebug
+
+RemoteDebug Debug;
+
+#endif
 
 // Object of Grandeur project.
 Grandeur::Project project;
@@ -25,6 +37,7 @@ void cb(const char *path, const char *state)
   String x_str = xy_str.substring(0, comma_pos);
   String y_str = xy_str.substring(comma_pos + 1);
   //Serial.printf("\n%s:%d:(%s,%s)\n", xy_str, comma_pos, x_str, y_str);
+  Debug.printf("\n%s:%d:(%s,%s)\n", xy_str, comma_pos, x_str, y_str);
   int _x = x_str.toInt();
   int _y = y_str.toInt();
 
@@ -33,10 +46,11 @@ void cb(const char *path, const char *state)
     lr[param] = (_y > 0) ? BACKWARD : (_y < 0) ? FORWARD
                 : HALT;
   // 3- decode speeds
-  float speed = round(sqrt(pow(_x, 2) + pow(_y, 2))/10);
+  float speed = round(sqrt(pow(_x, 2) + pow(_y, 2)) / 48);
   uint16_t sl = (_x > 0) ? _x * speed : (_x < 0) ? (100 + _x) * speed : speed;
   uint16_t sr = (_x > 0) ? (100 - _x) * speed : (_x < 0) ? (-1 * _x * speed) : speed;
-//  Serial.printf("\n%d,%d:%f:%d,%d\n", _x, _y, speed, sl, sr);
+  //Serial.printf("\n%d,%d:%f:%d,%d\n", _x, _y, speed, sl, sr);
+  Debug.printf("\n%d,%d:%f:%d,%d\n", _x, _y, speed, sl, sr);
   set_speed_l(sl);
   set_speed_r(sr);
 }
@@ -78,4 +92,15 @@ void startWiFi(void)
   Serial.println("*");
   // This gets printed after the WiFi is connected.
   Serial.printf("\nDevice has successfully connected to WiFi. Its IP Address is: %s\n", WiFi.localIP().toString().c_str());
+  WiFi.hostname(HOST_NAME);
+
+  if (MDNS.begin(HOST_NAME)) {
+    Serial.print("* MDNS responder started. Hostname -> ");
+    Serial.println(HOST_NAME);
+  }
+  MDNS.addService("telnet", "tcp", 23); // WiFi server of RemoteDebug, register as telnet
+
+  Debug.begin(HOST_NAME); // Initiaze the WiFi server
+  Serial.print("* WiFI connected. IP address: ");
+  Serial.println(WiFi.localIP());
 }
