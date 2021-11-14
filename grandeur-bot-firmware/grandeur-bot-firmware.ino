@@ -8,8 +8,8 @@
 #define RFor D4 // 2 IN1
 #define LBck D1 // 5 IN3
 #define RBck D2 // 4 IN2
-#define LPWM D5 // 14
-#define RPWM D6 // 12
+#define LPWM D5 // 14 ENB
+#define RPWM D6 // 12 ENA
 
 #define FS 1023 // full speed PWM
 #define TS 50 // diagonal turn speed PWM
