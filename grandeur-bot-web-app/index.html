@@ -13,80 +13,72 @@
 
 <!-- Body block of our page-->
 
+<!-- prevent refresh on drag down-->
+
 <body style="overscroll-behavior:contain;">
-  <!-- Heading of the page -->
+
+  <!-- Heading of the page shows cloud connection status -->
   <h1 style="text-align:center;user-select:none;" id="status">Starting</h1>
+
+  <!-- Joystick -->
   <div id="joyDiv" style="width:480px;height:480px;margin:auto;"></div>
-  <!-- Link the joystick script file -->
+
+  <!-- Link the joystick script file copied from library -->
+  <!-- library hosted on GitHub: https://github.com/bobboteck/JoyStick -->
   <script src="./joy.js"></script>
+  <!-- Let's use the joystick in following script block -->>
   <script type="text/javascript">
-    // Create JoyStick object into the DIV 'joyDiv'
-
+    // parameters object for editing the default color scheme
     var joyParam = { "title": "joystick", "internalFillColor": "#000000", "internalStrokeColor": "#000033", "externalStrokeColor": "#000033", "externalFillColor": "#000000" };
-    // var joyParam = { "internalFillColor": "0xFFFFFF" };
+    // the joystick object
     var joy = new JoyStick('joyDiv', joyParam);
-    /*
-    Initialize the SDK and get
-    a reference to the project
-*/
-    var canvas, ctx;
-    var project = grandeur.init("grandeurkv7jxe7700af0k178y0f1xcf", "accesskvnwixok03jh0ixfefx1hftc", "eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWkNJNkltRmpZMlZ6YzJ0MmJuZHBlRzlyTUROcWFEQnBlR1psWm5neGFHWjBZeUlzSW5SNWNHVWlPaUpoWTJObGMzTWlMQ0pwWVhRaU9qRTJNell5TURnNE9EZDkuZ0ZwTjFIMzhLaDZiaHBPa3FZbGpFdXNSVW1YNVZCSzM5T3NUczE5NlM3VSJ9");
-    var devices;
-    var deviceID = "devicekvxja2pn00fc0pxf1rds7uo3";
-    var timer = null;
-    var connected = false;
+    // SDK initialization
+    var project = grandeur.init("PROJECT-API-KEY", "ACCESS-KEY", "ACCESS-TOKEN");
+    const deviceID = "DEVICE-ID"; // ID for the particular device need to be controlled
+    const sens = 10; // sensitivity of the joystick (on a change of 10px new value shall be forwarded)
+    var devices; // to obtain a global reference to devices paired 
+    var connected = false; // flag for cloud connection status
+    var gdir = "*"; // global variable to cache direction and detect change
 
-    var gx = 0;
-    var gy = 0;
-
-
-    const sens = 10;
-    var gdir = "*";
-
+    // periodic function to poll the joystick direction eveery 100ms
     setInterval(function () {
-      const dir = joy.GetDir();
-      if (dir !== gdir) {
-        gdir = dir;
-        if (devices && connected) {
-          devices.device(deviceID).data().set("D", dir);
-        }
+      const dir = joy.GetDir(); // joystick direction
+      if (dir !== gdir) // detect change
+      {
+        gdir = dir; // update cached value
+        if (devices && connected) // determine whether cloud is connected
+          devices.device(deviceID).data().set("D", dir);// send new direction
       }
     }, 100);
 
-    /* Setting the connection status update handler */
+    // handler for connection status change
     project.onConnection((status) => {
       /* 
           This callback gets fired
           whenever the connection status
           changes
       */
-
       switch (status) {
         case "CONNECTED":
           /*
               If SDK is connected,
               we set the status.
           */
-          document.getElementById("status").innerText = "Connected";
-          devices = project.devices();
-          connected = true;
+          document.getElementById("status").innerText = "Connected";// update page heading
+          devices = project.devices(); // obtain reference to paired devices
+          connected = true; // update cloud status flag
           break;
-        default:
-          /* If SDK gets disconnected, we display the status
-             on the app and clear the timer.
-           */
+        default: // connection lost
           document.getElementById("status").innerText = "Disconnected";
           connected = false;
-          /* Clears timer */
-          clearInterval(timer);
       }
     });
 
     /* Function to login user */
     async function login() {
       /* Store credentials into variables */
-      var email = "user@somemail.com";
-      var password = "userpass";
+      const email = "USER-ACCOUNT-EMAIL";
+      const password = "USER-ACCOUNT-PASSWORD";
 
       /* Set the status to logging in */
       document.getElementById("status").innerText = "Logging in";
@@ -130,7 +122,7 @@
         document.getElementById("status").innerText = "Network Error";
       }
     }
-    
+
     /* Call login on startup */
     login();
   </script>
