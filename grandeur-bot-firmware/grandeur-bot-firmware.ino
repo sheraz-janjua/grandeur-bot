@@ -12,7 +12,7 @@
 #define RPWM D6 // 12 ENA
 
 #define FS 1023 // full speed PWM
-#define TS 50 // diagonal turn speed PWM
+#define TS 100 // diagonal turn speed PWM
 
 // Cloud credentials
 const char *apiKey = "---grandeur-cloud-project-api-key------";
